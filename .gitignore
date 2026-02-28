@@ -20,4 +20,5 @@ __pycache__/
 *.pyc
 .venv/
 chroma_data/
-CLAUDE.md
+*.sh
+Miniconda3-*.sh
