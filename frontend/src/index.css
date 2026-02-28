@@ -1,0 +1,54 @@
+/* React Flow styles */
+@import '@xyflow/react/dist/style.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased m-0;
+  }
+}
+
+/* Typing indicator animation */
+@keyframes bounce-dot {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
+}
+
+.typing-dot {
+  @apply w-2 h-2 bg-gray-400 rounded-full inline-block mx-0.5;
+  animation: bounce-dot 1.4s infinite ease-in-out both;
+}
+.typing-dot:nth-child(1) { animation-delay: -0.32s; }
+.typing-dot:nth-child(2) { animation-delay: -0.16s; }
+.typing-dot:nth-child(3) { animation-delay: 0s; }
+
+/* Mobile sidebar slide-in animation */
+@keyframes slide-in-left {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.2s ease-out;
+}
+
+/* Mobile chatbot slide-in animation */
+@keyframes slide-in-right {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.2s ease-out;
+}
+
+/* Custom scrollbar for mobile-friendly thin scrollbars */
+@media (max-width: 1023px) {
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+}
+
