@@ -15,6 +15,7 @@ export default function LandingPage() {
   const [zipFile, setZipFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const isValid = githubUrl.trim().length > 0 || zipFile !== null;
 
@@ -39,6 +40,7 @@ export default function LandingPage() {
   const handleSubmit = async () => {
     if (!isValid || isSubmitting) return;
     setIsSubmitting(true);
+    setErrorMsg(null);
     resetProgress();
 
     try {
@@ -54,7 +56,10 @@ export default function LandingPage() {
       setSessionId(response.session_id);
       setActivePanel('progress');
       navigate('/dashboard');
-    } catch {
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : 'Failed to start analysis. Is the backend running?';
+      setErrorMsg(msg);
       setIsSubmitting(false);
     }
   };
@@ -147,6 +152,13 @@ export default function LandingPage() {
               </>
             )}
           </div>
+
+          {/* Error message */}
+          {errorMsg && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              {errorMsg}
+            </div>
+          )}
 
           {/* Analyze Button */}
           <button

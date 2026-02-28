@@ -153,8 +153,9 @@ def run_agent(
             else:
                 break  # model produced text output
 
-        # Extract final text
-        return response.text
+        # Extract final text — response.text can be None when only
+        # function_call parts are present (no text parts).
+        return response.text or ""
 
     except Exception as exc:
         logger.error("Agentic loop failed: %s", exc)

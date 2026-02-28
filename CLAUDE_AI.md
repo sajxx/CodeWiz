@@ -42,7 +42,7 @@ It consists of three services: frontend (port 5173), backend (port 8000), and AI
     prompts.py           — all system prompts and prompt builders
   /rag/
     chunker.py           — Python AST + JS/TS regex + config chunking
-    embedder.py          — Gemini text-embedding-004 with batch + rate limiting
+    embedder.py          — Gemini embedding model (configurable via GEMINI_EMBED_MODEL, default text-embedding-005) with batch + rate limiting
     store.py             — ChromaDB collection CRUD (cosine, batch 50)
   /templates/
     checklist_templates.py — per-project-type checklist templates

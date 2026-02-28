@@ -26,7 +26,6 @@ export default function ImpactPreviewModal({ filePath, onClose }: Props) {
 
   useEffect(() => {
     setLoading(true);
-    // TODO: Replace mock with real API call
     fetchImpact({ session_id: sessionId ?? '', file_path: filePath })
       .then(setData)
       .finally(() => setLoading(false));

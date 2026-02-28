@@ -28,6 +28,7 @@ const panelMap = {
 
 export default function Dashboard() {
   const sessionId = useAnalysisStore((s) => s.sessionId);
+  const result = useAnalysisStore((s) => s.result);
   const setResult = useAnalysisStore((s) => s.setResult);
   const activePanel = useAnalysisStore((s) => s.activePanel);
   const setActivePanel = useAnalysisStore((s) => s.setActivePanel);
@@ -38,40 +39,55 @@ export default function Dashboard() {
   const isChatOpen = useChatStore((s) => s.isOpen);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Connect WebSocket for progress & load mock data
+  // Connect WebSocket for progress & load analysis result from backend
   useEffect(() => {
     if (!sessionId) return;
 
-    // Try to connect real websocket
-    const ws = connectProgressSocket(
+    let resultLoaded = false;
+
+    // Connect WebSocket with built-in reconnection + polling fallback
+    const connection = connectProgressSocket(
       sessionId,
       (event) => updateStep(event),
-      () => {
-        // On WS error — use mock: simulate all steps done after 2s
-        setTimeout(() => {
-          simulateComplete();
-        }, 2000);
+      (err) => {
+        console.warn('[Dashboard] WebSocket error:', err);
+      },
+      (result) => {
+        // Called by the polling fallback when analysis completes
+        if (!resultLoaded) {
+          resultLoaded = true;
+          setResult(result);
+        }
       },
     );
 
-    // Also load the analysis result (mock for now)
-    fetchAnalysisResult(sessionId).then((result) => {
-      setResult(result);
-    });
+    // Also fetch the full result via REST (works alongside WS progress)
+    fetchAnalysisResult(sessionId)
+      .then((fetchedResult) => {
+        if (!resultLoaded) {
+          resultLoaded = true;
+          setResult(fetchedResult);
+          // Mark all progress steps as done so the UI transitions
+          simulateComplete();
+        }
+      })
+      .catch((err) => {
+        console.error('[Dashboard] Failed to fetch analysis result:', err);
+      });
 
     return () => {
-      ws.close();
+      connection.close();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
 
-  // Auto-switch to overview when analysis completes
+  // Auto-switch to overview when analysis completes (either progress steps or result loaded)
   useEffect(() => {
-    if (isComplete && activePanel === 'progress') {
+    if ((isComplete || result) && activePanel === 'progress') {
       const timeout = setTimeout(() => setActivePanel('overview'), 800);
       return () => clearTimeout(timeout);
     }
-  }, [isComplete, activePanel, setActivePanel]);
+  }, [isComplete, result, activePanel, setActivePanel]);
 
   const PanelComponent = panelMap[activePanel];
 

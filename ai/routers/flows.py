@@ -51,6 +51,10 @@ async def flows(req: FlowsRequest):
         user_prompt=user_prompt,
     )
 
+    if not raw:
+        logger.warning("Agent returned empty response for flows")
+        return FlowsResponse(flows=[])
+
     try:
         cleaned = raw.strip()
         if cleaned.startswith("```"):
@@ -75,6 +79,6 @@ async def flows(req: FlowsRequest):
             flows_out.append(Flow(id=f.get("id", ""), name=f.get("name", ""), steps=steps))
         return FlowsResponse(flows=flows_out)
 
-    except (json.JSONDecodeError, AttributeError) as exc:
-        logger.warning("Failed to parse flows JSON: %s — raw: %s", exc, raw[:200])
+    except (json.JSONDecodeError, AttributeError, TypeError) as exc:
+        logger.warning("Failed to parse flows JSON: %s — raw: %s", exc, (raw or "")[:200])
         return FlowsResponse(flows=[])

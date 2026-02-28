@@ -1,14 +1,16 @@
-"""Gemini embedding calls (text-embedding-004)."""
+"""Gemini embedding calls."""
 
 from __future__ import annotations
 
 import logging
+import os
 import time
 from typing import Any
 
 logger = logging.getLogger(__name__)
 
-EMBED_MODEL = "text-embedding-004"
+EMBED_MODEL = os.getenv("GEMINI_EMBED_MODEL", "gemini-embedding-001")
+EMBED_DIM = int(os.getenv("GEMINI_EMBED_DIM", "3072"))
 BATCH_SIZE = 20
 BATCH_SLEEP = 0.5  # seconds between batches
 
@@ -23,7 +25,7 @@ def embed_texts(
     texts: list[str],
     task_type: str = "RETRIEVAL_DOCUMENT",
 ) -> list[list[float]]:
-    """Embed a list of texts using Gemini text-embedding-004.
+    """Embed a list of texts using the configured Gemini embedding model.
 
     Batches requests in groups of BATCH_SIZE with a sleep between batches.
     Returns a list of embedding vectors (same order as input).
@@ -43,8 +45,7 @@ def embed_texts(
         except Exception as exc:
             logger.error("Embedding batch %d failed: %s", i // BATCH_SIZE, exc)
             # Return zero vectors as fallback so indexing can continue
-            dim = 768  # text-embedding-004 output dimension
-            all_embeddings.extend([[0.0] * dim for _ in batch])
+            all_embeddings.extend([[0.0] * EMBED_DIM for _ in batch])
 
         # Rate-limit sleep (skip after last batch)
         if i + BATCH_SIZE < len(texts):
@@ -65,4 +66,4 @@ def embed_query(text: str) -> list[float]:
         return result.embeddings[0].values
     except Exception as exc:
         logger.error("Query embedding failed: %s", exc)
-        return [0.0] * 768
+        return [0.0] * EMBED_DIM

@@ -34,7 +34,6 @@ export default function ChatbotDrawer() {
     setIsLoading(true);
 
     try {
-      // TODO: Replace mock with real API call
       const response = await sendChatMessage({
         session_id: sessionId ?? '',
         message: userMsg.content,

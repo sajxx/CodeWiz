@@ -24,7 +24,6 @@ export default function AIExplanationPopup({
 
   useEffect(() => {
     setLoading(true);
-    // TODO: Replace mock with real API call
     fetchExplanation({
       session_id: sessionId ?? '',
       element_type: elementType,
