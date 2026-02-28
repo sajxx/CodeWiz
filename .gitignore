@@ -1,0 +1,15 @@
+.env.example
+.env
+node_modules/
+dist/
+build/
+coverage/
+.DS_Store
+*.log
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

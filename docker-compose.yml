@@ -1,0 +1,22 @@
+# Docker Compose stub — to be filled by backend dev
+version: "3.8"
+
+services:
+  # backend:
+  #   build: ./backend
+  #   ports:
+  #     - "3000:3000"
+  #   env_file:
+  #     - .env
+
+  # frontend:
+  #   build: ./frontend
+  #   ports:
+  #     - "5173:5173"
+
+  # ai:
+  #   build: ./ai
+  #   ports:
+  #     - "8000:8000"
+  #   env_file:
+  #     - .env
