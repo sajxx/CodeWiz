@@ -13,3 +13,12 @@ coverage/
 *.njsproj
 *.sln
 *.sw?
+
+# AI service
+ai/chroma_data/
+__pycache__/
+*.pyc
+.venv/
+chroma_data/
+*.sh
+Miniconda3-*.sh
