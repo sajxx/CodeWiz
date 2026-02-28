@@ -59,10 +59,10 @@ export default function ChatbotDrawer() {
   };
 
   return (
-    <div className="fixed inset-y-0 right-0 w-[380px] bg-white shadow-2xl border-l border-gray-200 flex flex-col z-50">
+    <div className="fixed inset-y-0 right-0 w-full sm:w-[380px] bg-white shadow-2xl border-l border-gray-200 flex flex-col z-50 animate-slide-in-right">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
-        <h3 className="font-semibold text-gray-800">CodeLens Chat</h3>
+      <div className="flex items-center justify-between p-3 sm:p-4 border-b border-gray-200">
+        <h3 className="font-semibold text-gray-800">Codebase Chat</h3>
         <button
           onClick={() => setIsOpen(false)}
           className="p-1 hover:bg-gray-100 rounded-lg transition"
@@ -111,7 +111,7 @@ export default function ChatbotDrawer() {
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-3 sm:p-4 border-t border-gray-200">
         <div className="flex items-center gap-2">
           <input
             type="text"
@@ -119,7 +119,7 @@ export default function ChatbotDrawer() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             placeholder="Ask about the codebase…"
-            className="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            className="flex-1 border border-gray-300 rounded-full bg-gray-50 px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
           />
           <button
             onClick={handleSend}

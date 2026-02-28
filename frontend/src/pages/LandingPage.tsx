@@ -60,26 +60,26 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4 sm:p-6">
       <div className="w-full max-w-lg">
         {/* Logo / Title */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-600 mb-4">
-            <Code2 className="w-8 h-8 text-white" />
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-blue-600 mb-3 sm:mb-4">
+            <Code2 className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-white">CodeLens</h1>
-          <p className="text-slate-400 mt-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white">CodeLens</h1>
+          <p className="text-slate-400 mt-2 text-sm sm:text-base px-2">
             Understand any codebase in minutes, not hours.
           </p>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
+        <div className="bg-white rounded-2xl shadow-2xl p-5 sm:p-8">
           {/* GitHub URL Input */}
           <label className="block text-sm font-medium text-gray-700 mb-2">
             GitHub Repository URL
           </label>
-          <div className="relative mb-6">
+          <div className="relative mb-4 sm:mb-6">
             <Github className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="url"
@@ -90,12 +90,12 @@ export default function LandingPage() {
                 if (e.target.value) setZipFile(null);
               }}
               disabled={zipFile !== null}
-              className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition disabled:bg-gray-50 disabled:text-gray-400"
+              className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition disabled:bg-gray-50 disabled:text-gray-400 text-sm sm:text-base"
             />
           </div>
 
           {/* Divider */}
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-3 mb-4 sm:mb-6">
             <div className="flex-1 h-px bg-gray-200" />
             <span className="text-sm text-gray-400">or</span>
             <div className="flex-1 h-px bg-gray-200" />
@@ -106,7 +106,7 @@ export default function LandingPage() {
             onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
             onDragLeave={() => setIsDragOver(false)}
             onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+            className={`border-2 border-dashed rounded-xl p-6 sm:p-8 text-center cursor-pointer transition-colors ${
               isDragOver
                 ? 'border-blue-500 bg-blue-50'
                 : zipFile
@@ -152,7 +152,7 @@ export default function LandingPage() {
           <button
             onClick={handleSubmit}
             disabled={!isValid || isSubmitting}
-            className="w-full mt-6 flex items-center justify-center gap-2 bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full mt-5 sm:mt-6 flex items-center justify-center gap-2 bg-blue-600 text-white py-3 px-6 rounded-xl font-semibold hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
           >
             {isSubmitting ? (
               <>

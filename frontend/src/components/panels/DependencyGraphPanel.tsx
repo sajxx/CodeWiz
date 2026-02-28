@@ -108,12 +108,12 @@ export default function DependencyGraphPanel() {
   if (!result) return <div className="text-gray-400">Loading graph…</div>;
 
   return (
-    <div className="h-full flex flex-col" style={{ minHeight: '600px' }}>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold text-gray-800">Dependency Graph</h2>
-        <div className="flex items-center gap-4">
+    <div className="h-full flex flex-col" style={{ minHeight: '400px' }}>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Dependency Graph</h2>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
           {/* Legend */}
-          <div className="flex items-center gap-3 text-xs">
+          <div className="flex items-center gap-2 sm:gap-3 text-xs flex-wrap">
             {(Object.entries(nodeColors) as [GraphNodeType, string][]).map(
               ([type, color]) => (
                 <span key={type} className="flex items-center gap-1">

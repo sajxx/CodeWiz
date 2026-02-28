@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   ReactFlow,
   Controls,
@@ -7,32 +7,138 @@ import {
   useEdgesState,
   type Node,
   type Edge,
+  type NodeProps,
+  Handle,
+  Position,
+  MarkerType,
 } from '@xyflow/react';
 import dagre from 'dagre';
 import { useAnalysisStore } from '@/store/analysisStore';
 import type { FlowStepType } from '@shared/types';
 
-const stepStyles: Record<FlowStepType, { bg: string; shape: string }> = {
-  entry:    { bg: '#22C55E', shape: 'rounded-full' },
-  exit:     { bg: '#22C55E', shape: 'rounded-full' },
-  service:  { bg: '#3B82F6', shape: 'rounded-lg' },
-  decision: { bg: '#F59E0B', shape: 'rotate-45' },
-  database: { bg: '#8B5CF6', shape: 'rounded-lg' },
+/* ── colour palette per step type ── */
+const stepColors: Record<FlowStepType, string> = {
+  entry:    '#22C55E',
+  exit:     '#EF4444',
+  service:  '#3B82F6',
+  decision: '#F59E0B',
+  database: '#8B5CF6',
 };
 
+/* ── Custom node: diamond for decision ── */
+function DecisionNode({ data }: NodeProps) {
+  return (
+    <div className="relative flex items-center justify-center" style={{ width: 90, height: 90 }}>
+      {/* Diamond shape */}
+      <div
+        style={{
+          position: 'absolute',
+          width: 70,
+          height: 70,
+          backgroundColor: stepColors.decision,
+          borderRadius: 8,
+          transform: 'rotate(45deg)',
+        }}
+      />
+      {/* Text stays upright */}
+      <span
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          color: '#fff',
+          fontSize: 11,
+          fontWeight: 600,
+          textAlign: 'center',
+          maxWidth: 80,
+          lineHeight: '1.3',
+        }}
+      >
+        {data.label as string}
+      </span>
+      <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
+      <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
+    </div>
+  );
+}
+
+/* ── Custom node: pill for entry / exit ── */
+function PillNode({ data }: NodeProps) {
+  const bg = (data.stepType as string) === 'exit' ? stepColors.exit : stepColors.entry;
+  return (
+    <div
+      style={{
+        backgroundColor: bg,
+        color: '#fff',
+        borderRadius: 9999,
+        padding: '8px 28px',
+        fontSize: 12,
+        fontWeight: 600,
+        textAlign: 'center',
+        minWidth: 180,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {data.label as string}
+      <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
+      <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
+    </div>
+  );
+}
+
+/* ── Custom node: rectangle for service / database ── */
+function RectNode({ data }: NodeProps) {
+  const bg = (data.stepType as string) === 'database' ? stepColors.database : stepColors.service;
+  return (
+    <div
+      style={{
+        backgroundColor: bg,
+        color: '#fff',
+        borderRadius: 8,
+        padding: '10px 16px',
+        fontSize: 12,
+        fontWeight: 600,
+        textAlign: 'center',
+        minWidth: 180,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {data.label as string}
+      <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
+      <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
+    </div>
+  );
+}
+
+const nodeTypes = {
+  decision: DecisionNode,
+  pill: PillNode,
+  rect: RectNode,
+};
+
+/* ── Dagre layout ── */
 function layoutFlow(nodes: Node[], edges: Edge[]) {
   const g = new dagre.graphlib.Graph();
   g.setDefaultEdgeLabel(() => ({}));
-  g.setGraph({ rankdir: 'TB', nodesep: 50, ranksep: 70 });
+  g.setGraph({ rankdir: 'TB', nodesep: 50, ranksep: 80 });
 
-  nodes.forEach((n) => g.setNode(n.id, { width: 220, height: 60 }));
+  nodes.forEach((n) => {
+    const isDecision = n.type === 'decision';
+    g.setNode(n.id, { width: isDecision ? 100 : 220, height: isDecision ? 100 : 50 });
+  });
   edges.forEach((e) => g.setEdge(e.source, e.target));
 
   dagre.layout(g);
 
   return nodes.map((n) => {
     const pos = g.node(n.id);
-    return { ...n, position: { x: pos.x - 110, y: pos.y - 30 } };
+    const isDecision = n.type === 'decision';
+    const w = isDecision ? 100 : 220;
+    const h = isDecision ? 100 : 50;
+    return { ...n, position: { x: pos.x - w / 2, y: pos.y - h / 2 } };
   });
 }
 
@@ -40,36 +146,21 @@ export default function ExecutionFlowPanel() {
   const result = useAnalysisStore((s) => s.result);
   const [activeFlowIdx, setActiveFlowIdx] = useState(0);
 
+  /* Build nodes & edges from the selected flow */
   const { flowNodes, flowEdges } = useMemo(() => {
     if (!result || !result.executionFlows.length)
-      return { flowNodes: [], flowEdges: [] };
+      return { flowNodes: [] as Node[], flowEdges: [] as Edge[] };
 
     const flow = result.executionFlows[activeFlowIdx];
 
     const rfNodes: Node[] = flow.steps.map((step) => {
-      const cfg = stepStyles[step.type];
       const isDecision = step.type === 'decision';
       const isPill = step.type === 'entry' || step.type === 'exit';
       return {
         id: step.id,
-        data: { label: step.label },
+        type: isDecision ? 'decision' : isPill ? 'pill' : 'rect',
+        data: { label: step.label, stepType: step.type },
         position: { x: 0, y: 0 },
-        style: {
-          backgroundColor: cfg.bg,
-          color: '#fff',
-          borderRadius: isPill ? '9999px' : isDecision ? '8px' : '8px',
-          padding: isPill ? '8px 24px' : '10px 16px',
-          fontSize: '12px',
-          fontWeight: 600,
-          border: 'none',
-          transform: isDecision ? 'rotate(45deg)' : undefined,
-          minWidth: isDecision ? '80px' : '180px',
-          minHeight: isDecision ? '80px' : undefined,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          textAlign: 'center' as const,
-        },
       };
     });
 
@@ -79,21 +170,32 @@ export default function ExecutionFlowPanel() {
       target: flow.steps[i + 1].id,
       style: { stroke: '#94A3B8', strokeWidth: 2 },
       animated: true,
+      markerEnd: { type: MarkerType.ArrowClosed, color: '#94A3B8' },
     }));
 
     const layoutedNodes = layoutFlow(rfNodes, rfEdges);
     return { flowNodes: layoutedNodes, flowEdges: rfEdges };
   }, [result, activeFlowIdx]);
 
-  const [nodes, , onNodesChange] = useNodesState(flowNodes);
-  const [edges, , onEdgesChange] = useEdgesState(flowEdges);
+  /* Sync React Flow state when the memo output changes (tab switch) */
+  const [nodes, setNodes, onNodesChange] = useNodesState(flowNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(flowEdges);
+
+  useEffect(() => {
+    setNodes(flowNodes);
+    setEdges(flowEdges);
+  }, [flowNodes, flowEdges, setNodes, setEdges]);
+
+  const handleTabClick = useCallback((idx: number) => {
+    setActiveFlowIdx(idx);
+  }, []);
 
   if (!result) return <div className="text-gray-400">Loading…</div>;
 
   return (
-    <div className="h-full flex flex-col" style={{ minHeight: '600px' }}>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold text-gray-800">Execution Flow</h2>
+    <div className="h-full flex flex-col" style={{ minHeight: '400px' }}>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Execution Flow</h2>
 
         {/* Tab bar */}
         {result.executionFlows.length > 1 && (
@@ -101,7 +203,7 @@ export default function ExecutionFlowPanel() {
             {result.executionFlows.map((flow, idx) => (
               <button
                 key={flow.id}
-                onClick={() => setActiveFlowIdx(idx)}
+                onClick={() => handleTabClick(idx)}
                 className={`px-4 py-1.5 text-sm rounded-md transition ${
                   idx === activeFlowIdx
                     ? 'bg-white text-gray-800 shadow-sm font-medium'
@@ -116,18 +218,21 @@ export default function ExecutionFlowPanel() {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-4 mb-3 text-xs text-gray-500">
+      <div className="flex items-center gap-2 sm:gap-4 mb-3 text-xs text-gray-500 flex-wrap">
         <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded-full bg-green-500" /> Entry / Exit
+          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: stepColors.entry }} /> Entry
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded bg-blue-500" /> Service
+          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: stepColors.exit }} /> Exit
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded bg-yellow-500" style={{ transform: 'rotate(45deg)' }} /> Decision
+          <span className="w-3 h-3 rounded" style={{ backgroundColor: stepColors.service }} /> Service
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded bg-purple-500" /> Database
+          <span className="w-3 h-3 rounded" style={{ backgroundColor: stepColors.decision, transform: 'rotate(45deg)' }} /> Decision
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="w-3 h-3 rounded" style={{ backgroundColor: stepColors.database }} /> Database
         </span>
       </div>
 
@@ -135,6 +240,7 @@ export default function ExecutionFlowPanel() {
         <ReactFlow
           nodes={nodes}
           edges={edges}
+          nodeTypes={nodeTypes}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           fitView

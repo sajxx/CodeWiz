@@ -64,10 +64,10 @@ export default function ComplexityScoresPanel() {
 
   return (
     <div className="max-w-5xl mx-auto">
-      <h2 className="text-2xl font-bold text-gray-800 mb-4">Complexity Scores</h2>
+      <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Complexity Scores</h2>
 
       {/* Summary Banner */}
-      <div className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl mb-6">
+      <div className="flex items-start sm:items-center gap-3 p-3 sm:p-4 bg-amber-50 border border-amber-200 rounded-xl mb-4 sm:mb-6">
         <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
         <p className="text-sm text-amber-800">
           <strong>{criticalCount}</strong> module{criticalCount !== 1 ? 's are' : ' is'}{' '}
@@ -77,8 +77,8 @@ export default function ComplexityScoresPanel() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
+        <table className="w-full text-sm min-w-[640px]">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
               {([

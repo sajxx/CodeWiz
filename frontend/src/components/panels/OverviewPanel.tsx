@@ -24,23 +24,23 @@ export default function OverviewPanel() {
         : 'text-green-600 bg-green-50';
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <h2 className="text-2xl font-bold text-gray-800">Overview</h2>
+    <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
+      <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Overview</h2>
 
       {/* Architecture Summary */}
-      <blockquote className="border-l-4 border-blue-500 bg-blue-50 p-5 rounded-r-lg text-gray-700 leading-relaxed">
+      <blockquote className="border-l-4 border-blue-500 bg-blue-50 p-3 sm:p-5 rounded-r-lg text-gray-700 leading-relaxed text-sm sm:text-base">
         {result.architectureSummary}
       </blockquote>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
         <StatCard icon={FileText} label="Total Files" value={totalFiles} />
         <StatCard icon={Boxes} label="Modules" value={totalModules} />
         <StatCard icon={Code2} label="Languages" value={languages} />
-        <div className={`flex items-center gap-3 p-4 rounded-xl ${riskColor}`}>
-          <AlertTriangle className="w-8 h-8 shrink-0" />
+        <div className={`flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-xl ${riskColor}`}>
+          <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 shrink-0" />
           <div>
-            <p className="text-2xl font-bold">{overallRisk}</p>
+            <p className="text-xl sm:text-2xl font-bold">{overallRisk}</p>
             <p className="text-xs opacity-70">Overall Risk</p>
           </div>
         </div>
@@ -95,10 +95,10 @@ function StatCard({
   value: number;
 }) {
   return (
-    <div className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
-      <Icon className="w-8 h-8 text-blue-500 shrink-0" />
+    <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
+      <Icon className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500 shrink-0" />
       <div>
-        <p className="text-2xl font-bold text-gray-800">{value}</p>
+        <p className="text-xl sm:text-2xl font-bold text-gray-800">{value}</p>
         <p className="text-xs text-gray-500">{label}</p>
       </div>
     </div>
@@ -107,10 +107,10 @@ function StatCard({
 
 function PanelSkeleton() {
   return (
-    <div className="max-w-4xl mx-auto space-y-6 animate-pulse">
+    <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 animate-pulse">
       <div className="h-8 bg-gray-200 rounded w-48" />
       <div className="h-24 bg-gray-200 rounded" />
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
         {[...Array(4)].map((_, i) => (
           <div key={i} className="h-20 bg-gray-200 rounded-xl" />
         ))}

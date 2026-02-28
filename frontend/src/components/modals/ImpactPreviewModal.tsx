@@ -44,10 +44,10 @@ export default function ImpactPreviewModal({ filePath, onClose }: Props) {
     <Dialog.Root open onOpenChange={(open) => !open && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/40 z-50" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg bg-white rounded-2xl shadow-2xl outline-none">
+        <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[calc(100%-2rem)] sm:w-full max-w-lg bg-white rounded-2xl shadow-2xl outline-none max-h-[90vh] flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-            <Dialog.Title className="text-lg font-semibold text-gray-800">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100">
+            <Dialog.Title className="text-base sm:text-lg font-semibold text-gray-800">
               Impact Preview
             </Dialog.Title>
             <Dialog.Close asChild>
@@ -57,7 +57,7 @@ export default function ImpactPreviewModal({ filePath, onClose }: Props) {
             </Dialog.Close>
           </div>
 
-          <div className="px-6 py-5 max-h-[70vh] overflow-y-auto">
+          <div className="px-4 sm:px-6 py-4 sm:py-5 max-h-[70vh] overflow-y-auto">
             {loading ? (
               <div className="flex items-center justify-center py-10">
                 <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />

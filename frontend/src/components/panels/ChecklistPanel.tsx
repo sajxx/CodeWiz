@@ -28,11 +28,11 @@ export default function ChecklistPanel() {
   if (!result) return <div className="text-gray-400">Loading…</div>;
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <h2 className="text-2xl font-bold text-gray-800 mb-2">
+    <div className="max-w-3xl mx-auto px-1 sm:px-0">
+      <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">
         New Developer Checklist
       </h2>
-      <p className="text-gray-500 mb-8">
+      <p className="text-gray-500 mb-6 sm:mb-8 text-sm sm:text-base">
         Follow these steps to get up to speed on the codebase.
       </p>
 
@@ -52,7 +52,7 @@ export default function ChecklistPanel() {
                 {phase.items.map((item) => (
                   <div
                     key={item.id}
-                    className={`flex items-start gap-3 p-4 rounded-lg border-l-4 transition ${
+                    className={`flex items-start gap-3 p-3 sm:p-4 rounded-lg border-l-4 transition ${
                       phaseColors[phase.phase]
                     } ${checkedItems[item.id] ? 'opacity-60' : ''}`}
                   >

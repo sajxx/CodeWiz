@@ -18,9 +18,9 @@ export default function ProgressPanel() {
   const isComplete = useProgressStore((s) => s.isComplete);
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <h2 className="text-2xl font-bold text-gray-800 mb-2">Analysis Progress</h2>
-      <p className="text-gray-500 mb-8">
+    <div className="max-w-2xl mx-auto px-1 sm:px-0">
+      <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">Analysis Progress</h2>
+      <p className="text-gray-500 mb-4 sm:mb-8 text-sm sm:text-base">
         {isComplete
           ? 'Analysis complete! Navigate to any section from the sidebar.'
           : 'Analyzing your codebase. This may take a few moments…'}
@@ -37,7 +37,7 @@ export default function ProgressPanel() {
                 step.status === 'active' ? 'border-blue-200 shadow-sm' : 'border-transparent'
               }`}
             >
-              <span className="text-sm font-medium text-gray-400 w-6 text-right">
+              <span className="text-sm font-medium text-gray-400 w-6 text-right hidden sm:block">
                 {i + 1}
               </span>
               <Icon

@@ -42,7 +42,7 @@ export default function CoreComponentsPanel() {
           <span className="text-gray-800 font-medium">{selectedModule.name}</span>
         </div>
 
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">
           {selectedModule.name}
         </h2>
         <p className="text-gray-600 mb-6">{selectedModule.role}</p>
@@ -52,7 +52,7 @@ export default function CoreComponentsPanel() {
           {selectedModule.services.map((svc) => (
             <div
               key={svc.id}
-              className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition cursor-pointer"
+              className="bg-white rounded-xl border border-gray-200 p-4 sm:p-5 hover:shadow-md transition cursor-pointer"
               onClick={() => setExplainService(svc.name)}
             >
               <div className="flex items-center justify-between mb-2">
@@ -108,9 +108,9 @@ export default function CoreComponentsPanel() {
   // Card Grid View
   return (
     <div className="max-w-5xl mx-auto">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Core Components</h2>
+      <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6">Core Components</h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {result.modules.map((mod) => (
           <button
             key={mod.id}

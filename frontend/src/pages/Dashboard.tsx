@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
 import TopBar from '@/components/layout/TopBar';
 import ProgressPanel from '@/components/panels/ProgressPanel';
@@ -36,6 +36,7 @@ export default function Dashboard() {
   const isComplete = useProgressStore((s) => s.isComplete);
   const toggleChat = useChatStore((s) => s.toggleOpen);
   const isChatOpen = useChatStore((s) => s.isOpen);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Connect WebSocket for progress & load mock data
   useEffect(() => {
@@ -76,11 +77,14 @@ export default function Dashboard() {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar />
+      <Sidebar
+        mobileOpen={mobileMenuOpen}
+        onMobileClose={() => setMobileMenuOpen(false)}
+      />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <TopBar />
-        <main className="flex-1 overflow-y-auto bg-gray-50 p-6">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        <TopBar onMenuToggle={() => setMobileMenuOpen(true)} />
+        <main className="flex-1 overflow-y-auto bg-gray-50 p-3 sm:p-4 md:p-6">
           <PanelComponent />
         </main>
       </div>
@@ -88,9 +92,9 @@ export default function Dashboard() {
       {/* Floating chatbot button */}
       <button
         onClick={toggleChat}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-105 z-40"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-12 h-12 sm:w-14 sm:h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-105 z-40"
       >
-        <MessageCircle className="w-6 h-6" />
+        <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6" />
       </button>
 
       {/* Chatbot drawer */}
