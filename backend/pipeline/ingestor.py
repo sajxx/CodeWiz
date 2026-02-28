@@ -22,7 +22,7 @@ async def ingest_github(url: str, max_size_mb: int = 100) -> str:
     """Clone a GitHub repo (shallow, depth=1) into a temp directory.
     Returns the temp directory path.
     """
-    temp_dir = tempfile.mkdtemp(prefix="codelens_")
+    temp_dir = tempfile.mkdtemp(prefix="codewiz_")
     try:
         logger.info(f"Cloning {url} into {temp_dir}")
         Repo.clone_from(url, temp_dir, depth=1)
@@ -48,7 +48,7 @@ async def ingest_zip(file: UploadFile, max_size_mb: int = 100) -> str:
     """Extract a ZIP upload into a temp directory.
     Returns the temp directory path.
     """
-    temp_dir = tempfile.mkdtemp(prefix="codelens_")
+    temp_dir = tempfile.mkdtemp(prefix="codewiz_")
     zip_path = os.path.join(temp_dir, "upload.zip")
 
     try:

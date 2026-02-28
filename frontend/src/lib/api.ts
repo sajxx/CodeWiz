@@ -115,4 +115,19 @@ export async function fetchImpact(
   return res.data;
 }
 
+export async function fetchFileContent(
+  sessionId: string,
+  filePath: string,
+): Promise<{ content: string; path: string }> {
+  const res = await http.get(`/api/file/${sessionId}`, {
+    params: { path: filePath },
+  });
+  if (res.status >= 400) {
+    throw new Error(
+      (res.data as unknown as { error?: string })?.error || 'File not found',
+    );
+  }
+  return res.data as { content: string; path: string };
+}
+
 export { http };

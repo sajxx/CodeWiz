@@ -5,7 +5,7 @@ import type { AnalysisResult } from '@shared/types';
 function buildMarkdownString(result: AnalysisResult): string {
   const lines: string[] = [];
 
-  lines.push(`# ${result.projectName} — CodeLens Analysis`);
+  lines.push(`# ${result.projectName} — CodeWiz Analysis`);
   lines.push('');
   lines.push(`> Generated on ${new Date(result.analyzedAt).toLocaleString()}`);
   lines.push('');
@@ -102,7 +102,7 @@ export function exportPdf(result: AnalysisResult) {
     y += splitLines.length * (size * 0.5) + 4;
   };
 
-  addText(`${result.projectName} — CodeLens Analysis`, 18, true);
+  addText(`${result.projectName} — CodeWiz Analysis`, 18, true);
   addText(`Generated on ${new Date(result.analyzedAt).toLocaleString()}`, 10);
   y += 4;
 

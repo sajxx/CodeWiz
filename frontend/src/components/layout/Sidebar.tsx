@@ -43,7 +43,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
     <aside className="w-[260px] lg:w-[260px] bg-slate-900 text-white flex flex-col h-full shrink-0">
       {/* Logo */}
       <div className="p-5 border-b border-slate-700 flex items-center justify-between">
-        <h2 className="text-lg font-bold tracking-tight">CodeLens</h2>
+        <h2 className="text-lg font-bold tracking-tight">CodeWiz</h2>
         {/* Close button visible only on mobile overlay */}
         {onMobileClose && (
           <button

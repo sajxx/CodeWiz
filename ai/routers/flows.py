@@ -20,6 +20,9 @@ class FlowsRequest(BaseModel):
     session_id: str
     entry_points: list[str]
     module_graph: dict[str, Any]
+    tech_stack: list[str] = []
+    architecture_summary: str = ""
+    component_roles: dict[str, str] = {}
 
 
 class FlowStep(BaseModel):
@@ -43,7 +46,13 @@ class FlowsResponse(BaseModel):
 @router.post("/ai/flows", response_model=FlowsResponse)
 async def flows(req: FlowsRequest):
     """Generate 1-3 execution flows via the agentic loop."""
-    user_prompt = build_flows_user(req.entry_points, req.module_graph)
+    user_prompt = build_flows_user(
+        req.entry_points,
+        req.module_graph,
+        tech_stack=req.tech_stack,
+        architecture_summary=req.architecture_summary,
+        component_roles=req.component_roles,
+    )
 
     raw = run_agent(
         session_id=req.session_id,

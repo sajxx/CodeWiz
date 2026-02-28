@@ -1,4 +1,4 @@
-# CodeLens Backend
+# CodeWiz Backend
 
 FastAPI server that accepts a GitHub URL or ZIP upload, runs a 7-stage analysis pipeline, streams progress over WebSocket, and serves the completed analysis via REST.
 

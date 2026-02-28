@@ -84,7 +84,10 @@ def _get_model():
 def _has_function_call(response: Any) -> bool:
     """Check if the response contains a function call."""
     try:
-        for part in response.candidates[0].content.parts:
+        parts = response.candidates[0].content.parts
+        if not parts:
+            return False
+        for part in parts:
             if part.function_call and part.function_call.name:
                 return True
     except (IndexError, AttributeError):
@@ -94,7 +97,10 @@ def _has_function_call(response: Any) -> bool:
 
 def _get_function_call(response: Any) -> Any:
     """Extract the first function call from the response."""
-    for part in response.candidates[0].content.parts:
+    parts = response.candidates[0].content.parts
+    if not parts:
+        return None
+    for part in parts:
         if part.function_call and part.function_call.name:
             return part.function_call
     return None
@@ -155,7 +161,11 @@ def run_agent(
 
         # Extract final text — response.text can be None when only
         # function_call parts are present (no text parts).
-        return response.text or ""
+        try:
+            return response.text or ""
+        except (AttributeError, ValueError):
+            # Some Gemini responses have no text property at all
+            return ""
 
     except Exception as exc:
         logger.error("Agentic loop failed: %s", exc)

@@ -1,5 +1,5 @@
 """
-CodeLens Backend — FastAPI Application
+CodeWiz Backend — FastAPI Application
 """
 
 import os
@@ -17,9 +17,9 @@ load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"))
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from routers import analyze, chat, explain, impact, health
+from routers import analyze, chat, explain, impact, health, files
 
-app = FastAPI(title="CodeLens Backend", version="1.0.0")
+app = FastAPI(title="CodeWiz Backend", version="1.0.0")
 
 # ── CORS ──────────────────────────────────────
 # Allow the Vite dev server and any local frontend origin
@@ -44,6 +44,7 @@ app.include_router(analyze.router)
 app.include_router(chat.router)
 app.include_router(explain.router)
 app.include_router(impact.router)
+app.include_router(files.router)
 
 # ── Startup validation ───────────────────────
 @app.on_event("startup")

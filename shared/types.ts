@@ -1,5 +1,5 @@
 // /shared/types.ts
-// CodeLens — Shared Type Contract v1.0.0
+// CodeWiz — Shared Type Contract v1.0.0
 // All three developers import from this file. Do not edit unilaterally.
 
 // ─────────────────────────────────────────────
@@ -77,6 +77,12 @@ export interface GraphNode {
   type: GraphNodeType;
   moduleId: string;
   filePath: string;
+  /** AI-generated short description of the module's purpose */
+  description?: string;
+  /** AI-assigned logical group (e.g. "API Layer", "Data Layer") */
+  group?: string;
+  /** AI-assigned importance score 1-5 (5 = most important) */
+  importance?: number;
 }
 
 export interface GraphEdge {
@@ -84,6 +90,8 @@ export interface GraphEdge {
   source: string; // GraphNode id
   target: string; // GraphNode id
   importCount: number;
+  /** AI-generated semantic relationship label (e.g. "delegates to") */
+  label?: string;
 }
 
 export interface GraphData {
@@ -149,6 +157,23 @@ export interface ChecklistPhase {
 }
 
 // ─────────────────────────────────────────────
+// FILE TREE
+// ─────────────────────────────────────────────
+
+export interface FileTreeNode {
+  name: string;
+  type: 'file' | 'directory';
+  path: string;
+  children?: FileTreeNode[];
+}
+
+export interface RepoStats {
+  totalFiles: number;
+  sourceFiles: number;
+  configFiles: number;
+}
+
+// ─────────────────────────────────────────────
 // MAIN ANALYSIS RESULT
 // ─────────────────────────────────────────────
 
@@ -164,6 +189,8 @@ export interface AnalysisResult {
   complexityScores: ComplexityScore[];
   executionFlows: Flow[];
   checklist: ChecklistPhase[];
+  fileTree?: FileTreeNode;
+  repoStats?: RepoStats;
 }
 
 // ─────────────────────────────────────────────

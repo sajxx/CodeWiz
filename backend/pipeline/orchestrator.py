@@ -282,7 +282,39 @@ async def run_pipeline(session_id: str, github_url: Optional[str] = None, upload
                     if ai_comment:
                         score["aiCommentary"] = ai_comment
 
-            # 7d: Execution flows
+            # 7d: AI graph refinement
+            await _send_progress(session_id, STEPS[6], "active", "AI: Refining dependency graph…")
+            component_roles = {}
+            if ai_components:
+                for comp in ai_components:
+                    component_roles[comp.get("id", "")] = comp.get("role", "")
+            graph_payload = {
+                "session_id": session_id,
+                "graph_data": session.graph_data,
+                "tech_stack": tech_names,
+                "architecture_summary": session.architecture_summary or "",
+                "component_roles": component_roles,
+            }
+            graph_resp = await _ai_post(client, "/ai/graph", graph_payload)
+            if graph_resp:
+                # Merge AI refinements into graph_data nodes
+                refined_nodes = {n["id"]: n for n in graph_resp.get("nodes", [])}
+                for node in session.graph_data.get("nodes", []):
+                    ai_node = refined_nodes.get(node["id"])
+                    if ai_node:
+                        node["label"] = ai_node.get("label", node["label"])
+                        node["type"] = ai_node.get("type", node["type"])
+                        node["description"] = ai_node.get("description", "")
+                        node["group"] = ai_node.get("group", "")
+                        node["importance"] = ai_node.get("importance", 3)
+                # Merge AI refinements into graph_data edges
+                refined_edges = {e["id"]: e for e in graph_resp.get("edges", [])}
+                for edge in session.graph_data.get("edges", []):
+                    ai_edge = refined_edges.get(edge["id"])
+                    if ai_edge and ai_edge.get("label"):
+                        edge["label"] = ai_edge["label"]
+
+            # 7e: Execution flows
             await _send_progress(session_id, STEPS[6], "active", "AI: Mapping execution flows…")
             # Identify entry points from graph nodes that have no incoming edges
             entry_points = []
@@ -293,6 +325,9 @@ async def run_pipeline(session_id: str, github_url: Optional[str] = None, upload
                 "session_id": session_id,
                 "entry_points": entry_points,
                 "module_graph": session.graph_data,
+                "tech_stack": tech_names,
+                "architecture_summary": session.architecture_summary or "",
+                "component_roles": component_roles,
             }
             flows_resp = await _ai_post(client, "/ai/flows", flows_payload)
             session.execution_flows = flows_resp.get("flows", []) if flows_resp else []
@@ -307,6 +342,15 @@ async def run_pipeline(session_id: str, github_url: Optional[str] = None, upload
                 content = safe_read_file(os.path.join(temp_dir, f))
                 if content:
                     index_files.append({"path": f, "content": content})
+                    # Cache content so we can serve it after temp_dir is deleted
+                    session.file_contents[f] = content
+
+            # Also cache config files
+            for f in session.config_files:
+                from utils.file_utils import safe_read_file
+                content = safe_read_file(os.path.join(temp_dir, f))
+                if content:
+                    session.file_contents[f] = content
 
             index_payload = {
                 "session_id": session_id,
@@ -366,6 +410,12 @@ async def run_pipeline(session_id: str, github_url: Optional[str] = None, upload
             "complexityScores": session.complexity_scores,
             "executionFlows": session.execution_flows,
             "checklist": session.checklist,
+            "fileTree": session.file_tree,
+            "repoStats": {
+                "totalFiles": len(session.source_files) + len(session.config_files),
+                "sourceFiles": len(session.source_files),
+                "configFiles": len(session.config_files),
+            },
         }
         session.status = "done"
         logger.info(f"Pipeline complete for session {session_id}")
@@ -380,9 +430,9 @@ async def run_pipeline(session_id: str, github_url: Optional[str] = None, upload
     finally:
         # Clean up temp directory
         if temp_dir and os.path.exists(temp_dir):
-            # Walk up to find the codelens_ prefix dir
+            # Walk up to find the codewiz_ prefix dir
             parent = temp_dir
-            while parent and not os.path.basename(parent).startswith("codelens_"):
+            while parent and not os.path.basename(parent).startswith("codewiz_"):
                 parent = os.path.dirname(parent)
             if parent:
                 shutil.rmtree(parent, ignore_errors=True)

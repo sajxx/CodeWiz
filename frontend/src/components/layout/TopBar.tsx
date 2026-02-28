@@ -25,7 +25,7 @@ export default function TopBar({ onMenuToggle }: TopBarProps) {
         {/* Mobile logo (visible only when sidebar is hidden) */}
         <div className="lg:hidden flex items-center gap-2">
           <Code2 className="w-5 h-5 text-blue-600" />
-          <span className="font-bold text-gray-800 text-sm">CodeLens</span>
+          <span className="font-bold text-gray-800 text-sm">CodeWiz</span>
         </div>
 
         <h1 className="hidden sm:block text-lg font-semibold text-gray-800 truncate">

@@ -23,7 +23,7 @@ def _get_client() -> chromadb.PersistentClient:
 
 
 def _collection_name(session_id: str) -> str:
-    return f"codelens_{session_id}"
+    return f"codewiz_{session_id}"
 
 
 def get_or_create_collection(session_id: str) -> chromadb.Collection:

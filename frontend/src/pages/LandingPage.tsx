@@ -3,13 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { Upload, Github, ArrowRight, Code2 } from 'lucide-react';
 import { useAnalysisStore } from '@/store/analysisStore';
 import { useProgressStore } from '@/store/progressStore';
+import { useChatStore } from '@/store/chatStore';
 import { submitAnalysis } from '@/lib/api';
 
 export default function LandingPage() {
   const navigate = useNavigate();
   const setSessionId = useAnalysisStore((s) => s.setSessionId);
   const setActivePanel = useAnalysisStore((s) => s.setActivePanel);
+  const resetAnalysis = useAnalysisStore((s) => s.reset);
   const resetProgress = useProgressStore((s) => s.reset);
+  const resetChat = useChatStore((s) => s.reset);
 
   const [githubUrl, setGithubUrl] = useState('');
   const [zipFile, setZipFile] = useState<File | null>(null);
@@ -41,7 +44,9 @@ export default function LandingPage() {
     if (!isValid || isSubmitting) return;
     setIsSubmitting(true);
     setErrorMsg(null);
+    resetAnalysis();
     resetProgress();
+    resetChat();
 
     try {
       let response;
@@ -72,7 +77,7 @@ export default function LandingPage() {
           <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-blue-600 mb-3 sm:mb-4">
             <Code2 className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white">CodeLens</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white">CodeWiz</h1>
           <p className="text-slate-400 mt-2 text-sm sm:text-base px-2">
             Understand any codebase in minutes, not hours.
           </p>

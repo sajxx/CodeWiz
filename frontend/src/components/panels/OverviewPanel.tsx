@@ -1,15 +1,20 @@
-import { FileText, Boxes, Code2, AlertTriangle } from 'lucide-react';
+import { FileText, Boxes, Code2, AlertTriangle, FolderOpen, GitBranch, Clock, ChevronRight, ChevronDown, File, Folder } from 'lucide-react';
 import { useAnalysisStore } from '@/store/analysisStore';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import AIExplanationPopup from '@/components/modals/AIExplanationPopup';
+import FileContentViewer from '@/components/modals/FileContentViewer';
+import type { FileTreeNode } from '@shared/types';
 
 export default function OverviewPanel() {
   const result = useAnalysisStore((s) => s.result);
   const [explainBadge, setExplainBadge] = useState<string | null>(null);
+  const [viewFilePath, setViewFilePath] = useState<string | null>(null);
 
   if (!result) return <PanelSkeleton />;
 
-  const totalFiles = result.modules.reduce((a, m) => a + m.fileCount, 0);
+  const totalFiles = result.repoStats?.totalFiles ?? result.modules.reduce((a, m) => a + m.fileCount, 0);
+  const sourceFiles = result.repoStats?.sourceFiles ?? totalFiles;
+  const configFiles = result.repoStats?.configFiles ?? 0;
   const totalModules = result.modules.length;
   const languages = result.techStack.filter((t) => t.type === 'language').length;
   const criticalCount = result.modules.filter((m) => m.riskLevel === 'critical').length;
@@ -24,8 +29,31 @@ export default function OverviewPanel() {
         : 'text-green-600 bg-green-50';
 
   return (
-    <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
+    <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
       <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Overview</h2>
+
+      {/* Repo Details Bar */}
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-wrap items-center gap-4 sm:gap-6 text-sm text-gray-600">
+        {result.repositoryUrl && (
+          <a
+            href={result.repositoryUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-blue-600 hover:text-blue-700 font-medium truncate max-w-xs sm:max-w-md"
+          >
+            <GitBranch className="w-4 h-4 shrink-0" />
+            {result.repositoryUrl.replace(/^https?:\/\/(www\.)?github\.com\//, '')}
+          </a>
+        )}
+        <span className="flex items-center gap-1.5">
+          <Clock className="w-4 h-4 text-gray-400" />
+          {new Date(result.analyzedAt).toLocaleString()}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <FileText className="w-4 h-4 text-gray-400" />
+          {sourceFiles} source &middot; {configFiles} config
+        </span>
+      </div>
 
       {/* Architecture Summary */}
       <blockquote className="border-l-4 border-blue-500 bg-blue-50 p-3 sm:p-5 rounded-r-lg text-gray-700 leading-relaxed text-sm sm:text-base">
@@ -73,6 +101,20 @@ export default function OverviewPanel() {
         </div>
       </div>
 
+      {/* File Structure */}
+      {result.fileTree && (
+        <div>
+          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+            <FolderOpen className="w-4 h-4" />
+            File Structure
+            <span className="text-[10px] font-normal text-gray-400 ml-1">(click a file to view)</span>
+          </h3>
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 max-h-80 overflow-y-auto font-mono text-xs">
+            <FileTreeView node={result.fileTree} depth={0} onFileClick={setViewFilePath} />
+          </div>
+        </div>
+      )}
+
       {/* AI Explanation Popup for badges */}
       {explainBadge && (
         <AIExplanationPopup
@@ -81,6 +123,63 @@ export default function OverviewPanel() {
           onClose={() => setExplainBadge(null)}
         />
       )}
+
+      {/* File Content Viewer */}
+      {viewFilePath && (
+        <FileContentViewer
+          filePath={viewFilePath}
+          onClose={() => setViewFilePath(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ── File Tree Viewer ── */
+function FileTreeView({ node, depth, onFileClick }: { node: FileTreeNode; depth: number; onFileClick: (path: string) => void }) {
+  const [expanded, setExpanded] = useState(depth < 2); // auto-expand top 2 levels
+
+  const toggle = useCallback(() => setExpanded((prev) => !prev), []);
+
+  if (node.type === 'file') {
+    return (
+      <button
+        onClick={() => onFileClick(node.path)}
+        className="flex items-center gap-1.5 py-0.5 text-gray-600 hover:text-blue-700 hover:bg-blue-50 rounded px-1 cursor-pointer w-full text-left transition"
+        style={{ paddingLeft: `${depth * 16 + 4}px` }}
+      >
+        <File className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+        <span className="truncate">{node.name}</span>
+      </button>
+    );
+  }
+
+  const children = node.children ?? [];
+  // Sort: directories first, then files, each alphabetically
+  const sorted = [...children].sort((a, b) => {
+    if (a.type !== b.type) return a.type === 'directory' ? -1 : 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  return (
+    <div>
+      <button
+        onClick={toggle}
+        className="flex items-center gap-1.5 py-0.5 w-full text-left text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded px-1 font-medium"
+        style={{ paddingLeft: `${depth * 16 + 4}px` }}
+      >
+        {expanded ? (
+          <ChevronDown className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+        ) : (
+          <ChevronRight className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+        )}
+        <Folder className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+        <span className="truncate">{node.name || node.path || '/'}</span>
+        <span className="ml-auto text-[10px] text-gray-400 tabular-nums">{children.length}</span>
+      </button>
+      {expanded && sorted.map((child, i) => (
+        <FileTreeView key={child.path || `${child.name}-${i}`} node={child} depth={depth + 1} onFileClick={onFileClick} />
+      ))}
     </div>
   );
 }
@@ -107,14 +206,16 @@ function StatCard({
 
 function PanelSkeleton() {
   return (
-    <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 animate-pulse">
+    <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6 animate-pulse">
       <div className="h-8 bg-gray-200 rounded w-48" />
+      <div className="h-12 bg-gray-200 rounded" />
       <div className="h-24 bg-gray-200 rounded" />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
         {[...Array(4)].map((_, i) => (
           <div key={i} className="h-20 bg-gray-200 rounded-xl" />
         ))}
       </div>
+      <div className="h-48 bg-gray-200 rounded-xl" />
     </div>
   );
 }

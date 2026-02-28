@@ -37,6 +37,9 @@ class SessionData:
     execution_flows: list[dict] = field(default_factory=list)
     checklist: list[dict] = field(default_factory=list)
 
+    # File contents cache (path -> content) for serving to frontend
+    file_contents: dict[str, str] = field(default_factory=dict)
+
     # Final assembled result
     result: Optional[dict] = None
     error: Optional[str] = None

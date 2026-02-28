@@ -29,7 +29,7 @@ Thumbs.db
 .env
 
 # Temp files from pipeline
-codelens_*/
+codewiz_*/
 
 # ChromaDB (if any)
 chroma_data/

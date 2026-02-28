@@ -84,7 +84,7 @@ async def lifespan(app: FastAPI):
 # ── FastAPI app ──────────────────────────────────────────────────────────────
 
 app = FastAPI(
-    title="CodeLens AI Service",
+    title="CodeWiz AI Service",
     version="1.0.0",
     lifespan=lifespan,
 )
@@ -97,6 +97,7 @@ from ai.routers.summarize import router as summarize_router
 from ai.routers.components import router as components_router
 from ai.routers.complexity import router as complexity_router
 from ai.routers.flows import router as flows_router
+from ai.routers.graph import router as graph_router
 from ai.routers.checklist import router as checklist_router
 from ai.routers.explain import router as explain_router
 from ai.routers.chat import router as chat_router
@@ -107,6 +108,7 @@ app.include_router(summarize_router)
 app.include_router(components_router)
 app.include_router(complexity_router)
 app.include_router(flows_router)
+app.include_router(graph_router)
 app.include_router(checklist_router)
 app.include_router(explain_router)
 app.include_router(chat_router)

@@ -23,6 +23,7 @@ export default function AIExplanationPopup({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     setLoading(true);
     fetchExplanation({
       session_id: sessionId ?? '',
@@ -30,8 +31,10 @@ export default function AIExplanationPopup({
       element_name: elementName,
       context,
     })
-      .then(setData)
-      .finally(() => setLoading(false));
+      .then((res) => { if (!cancelled) setData(res); })
+      .catch(() => { if (!cancelled) setData(null); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [sessionId, elementType, elementName, context]);
 
   return (

@@ -17,6 +17,9 @@ class ProgressManager:
 
     def __init__(self):
         self._connections: dict[str, list[WebSocket]] = {}
+        # Track latest progress state per session so late-connecting clients
+        # can receive events for steps that already completed.
+        self._step_state: dict[str, dict[str, dict]] = {}
         self._lock = asyncio.Lock()
 
     async def connect(self, session_id: str, ws: WebSocket, already_accepted: bool = False):
@@ -24,6 +27,13 @@ class ProgressManager:
             await ws.accept()
         async with self._lock:
             self._connections.setdefault(session_id, []).append(ws)
+            # Replay all previously recorded step states to the new client
+            states = self._step_state.get(session_id, {})
+        for _step, event in states.items():
+            try:
+                await ws.send_text(json.dumps(event))
+            except Exception:
+                pass
 
     async def disconnect(self, session_id: str, ws: WebSocket):
         async with self._lock:
@@ -47,6 +57,8 @@ class ProgressManager:
         payload = json.dumps(event)
 
         async with self._lock:
+            # Record the latest state for this step so late-joiners get it
+            self._step_state.setdefault(session_id, {})[step] = event
             conns = list(self._connections.get(session_id, []))
 
         dead: list[WebSocket] = []
@@ -67,6 +79,7 @@ class ProgressManager:
         """Close all WebSocket connections for a session."""
         async with self._lock:
             conns = list(self._connections.pop(session_id, []))
+            self._step_state.pop(session_id, None)
         for ws in conns:
             try:
                 await ws.close()
