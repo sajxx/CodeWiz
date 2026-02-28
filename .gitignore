@@ -19,3 +19,5 @@ ai/chroma_data/
 __pycache__/
 *.pyc
 .venv/
+chroma_data/
+CLAUDE.md
