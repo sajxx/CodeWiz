@@ -12,59 +12,107 @@ import type {
   ImpactResult,
 } from '@shared/types';
 
-const http = axios.create({ baseURL: BACKEND_URL });
+const http = axios.create({
+  baseURL: BACKEND_URL,
+  // Allow 202 responses without throwing (used for polling)
+  validateStatus: (status) => status >= 200 && status < 500,
+});
 
 export async function submitAnalysis(
-  _data: AnalyzeRequest | FormData,
+  data: AnalyzeRequest | FormData,
 ): Promise<AnalyzeResponse> {
-  // TODO: Replace mock with: const res = await http.post<ApiResponse<AnalyzeResponse>>('/api/analyze', data);
-  return { session_id: crypto.randomUUID() };
+  const payload =
+    data instanceof FormData
+      ? data
+      : (() => {
+          const fd = new FormData();
+          if (data.github_url) fd.append('github_url', data.github_url);
+          return fd;
+        })();
+  const res = await http.post<AnalyzeResponse>('/api/analyze', payload);
+  return res.data;
 }
 
 export async function fetchAnalysisResult(
   sessionId: string,
 ): Promise<AnalysisResult> {
-  // TODO: Replace mock with: const res = await http.get<ApiResponse<AnalysisResult>>(`/api/analysis/${sessionId}`);
-  const { mockAnalysisResult } = await import('@/mocks/analysisResult.mock');
-  return { ...mockAnalysisResult, sessionId };
+  // Poll until the result is ready (backend returns 202 while processing)
+  const maxAttempts = 180; // up to ~6 minutes
+  for (let i = 0; i < maxAttempts; i++) {
+    try {
+      const res = await http.get(`/api/result/${sessionId}`);
+      if (res.status === 200 && res.data?.data) {
+        return res.data.data as AnalysisResult;
+      }
+      if (res.status >= 400 && res.status !== 404) {
+        throw new Error(res.data?.error || `Backend error: ${res.status}`);
+      }
+    } catch (err) {
+      // Network error — keep retrying
+      if (axios.isAxiosError(err) && !err.response) {
+        console.warn(`[fetchAnalysisResult] Network error, retrying (${i + 1}/${maxAttempts})…`);
+      } else {
+        throw err;
+      }
+    }
+    // 202 = still processing — wait and retry
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+  throw new Error('Analysis timed out. Please try again.');
+}
+
+/**
+ * Poll the result endpoint once — returns the result if ready, null if still processing.
+ * Used as a WebSocket fallback to check completion status.
+ */
+export async function pollResultStatus(
+  sessionId: string,
+): Promise<{ status: 'processing' | 'done' | 'error'; result?: AnalysisResult; error?: string }> {
+  try {
+    const res = await http.get(`/api/result/${sessionId}`);
+    if (res.status === 200 && res.data?.data) {
+      return { status: 'done', result: res.data.data as AnalysisResult };
+    }
+    if (res.status === 202) {
+      return { status: 'processing' };
+    }
+    if (res.status >= 400) {
+      return { status: 'error', error: res.data?.error || `Error ${res.status}` };
+    }
+    return { status: 'processing' };
+  } catch {
+    return { status: 'processing' };
+  }
 }
 
 export async function sendChatMessage(
   payload: ChatRequest,
 ): Promise<ChatResponse> {
-  // TODO: Replace mock with: const res = await http.post<ApiResponse<ChatResponse>>('/api/chat', payload);
-  return { reply: `This is a mock response to: "${payload.message}". In production this answer will come from the AI service.` };
+  const res = await http.post<ChatResponse>('/api/chat', payload);
+  if (res.status >= 400) {
+    throw new Error((res.data as unknown as { error?: string })?.error || 'Chat request failed');
+  }
+  return res.data;
 }
 
 export async function fetchExplanation(
   payload: ExplainRequest,
 ): Promise<ExplainResponse> {
-  // TODO: Replace mock with: const res = await http.post<ApiResponse<ExplainResponse>>('/api/explain', payload);
-  return {
-    explanation: `**${payload.element_name}** is a key part of the codebase. It handles core functionality related to ${payload.element_type.replace('_', ' ')}. Understanding this component is essential for making changes in the surrounding modules. It follows common patterns used throughout the project.`,
-    links: [
-      { title: 'React Documentation', url: 'https://react.dev' },
-      { title: 'Express.js Guide', url: 'https://expressjs.com/en/guide/routing.html' },
-      { title: 'TypeScript Handbook', url: 'https://www.typescriptlang.org/docs/handbook/' },
-    ],
-  };
+  const res = await http.post<ExplainResponse>('/api/explain', payload);
+  if (res.status >= 400) {
+    throw new Error((res.data as unknown as { error?: string })?.error || 'Explain request failed');
+  }
+  return res.data;
 }
 
 export async function fetchImpact(
   payload: ImpactRequest,
 ): Promise<ImpactResult> {
-  // TODO: Replace mock with: const res = await http.post<ApiResponse<ImpactResult>>('/api/impact', payload);
-  return {
-    targetFile: payload.file_path,
-    affected: [
-      { path: 'src/routes/index.ts', level: 'direct', reason: `Directly imports ${payload.file_path}` },
-      { path: 'src/app.ts', level: 'direct', reason: `Mounts routes that depend on ${payload.file_path}` },
-      { path: 'src/middleware/errorHandler.ts', level: 'transitive', reason: 'Error handler wraps routes transitively' },
-      { path: 'src/utils/logger.ts', level: 'transitive', reason: 'Logger used by dependent modules' },
-      { path: 'tsconfig.json', level: 'config', reason: 'TypeScript config governs compilation of this file' },
-      { path: 'package.json', level: 'config', reason: 'Dependency versions affect build output' },
-    ],
-  };
+  const res = await http.post<ImpactResult>('/api/impact', payload);
+  if (res.status >= 400) {
+    throw new Error((res.data as unknown as { error?: string })?.error || 'Impact request failed');
+  }
+  return res.data;
 }
 
 export { http };

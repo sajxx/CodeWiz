@@ -3,26 +3,22 @@ CodeLens Backend — FastAPI Application
 """
 
 import os
+import sys
 from dotenv import load_dotenv
+
+# Ensure the backend directory is on sys.path so `from routers import ...` works
+# regardless of which directory uvicorn is launched from.
+_backend_dir = os.path.dirname(os.path.abspath(__file__))
+if _backend_dir not in sys.path:
+    sys.path.insert(0, _backend_dir)
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 
 from routers import analyze, chat, explain, impact, health
 
 app = FastAPI(title="CodeLens Backend", version="1.0.0")
-
-# ── CORS ──────────────────────────────────────
-frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[frontend_url],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 # ── Routers ───────────────────────────────────
 app.include_router(health.router)

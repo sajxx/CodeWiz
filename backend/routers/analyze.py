@@ -45,15 +45,27 @@ async def analyze(
 @router.websocket("/ws/{session_id}")
 async def websocket_progress(ws: WebSocket, session_id: str):
     """Stream ProgressEvent JSON as the pipeline runs."""
+    logger.info(f"WebSocket connection request for session {session_id}")
+
+    # Always accept first — rejecting without accept causes 403.
+    await ws.accept()
+
+    # Wait up to 5 seconds for the session to be created (race with POST /api/analyze)
+    import asyncio
+    for _ in range(10):
+        if session_id in sessions:
+            break
+        await asyncio.sleep(0.5)
+
     if session_id not in sessions:
+        logger.warning(f"WebSocket: session {session_id} not found after waiting, closing")
         await ws.close(code=4004, reason="Session not found")
         return
 
-    await progress_manager.connect(session_id, ws)
+    logger.info(f"WebSocket: session {session_id} connected")
+    await progress_manager.connect(session_id, ws, already_accepted=True)
     try:
-        # Keep connection alive until pipeline finishes or client disconnects
         while True:
-            # Wait for client messages (ping/pong or close)
             try:
                 await ws.receive_text()
             except WebSocketDisconnect:

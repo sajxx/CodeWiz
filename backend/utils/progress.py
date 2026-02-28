@@ -19,8 +19,9 @@ class ProgressManager:
         self._connections: dict[str, list[WebSocket]] = {}
         self._lock = asyncio.Lock()
 
-    async def connect(self, session_id: str, ws: WebSocket):
-        await ws.accept()
+    async def connect(self, session_id: str, ws: WebSocket, already_accepted: bool = False):
+        if not already_accepted:
+            await ws.accept()
         async with self._lock:
             self._connections.setdefault(session_id, []).append(ws)
 

@@ -236,7 +236,14 @@ async def run_pipeline(session_id: str, github_url: Optional[str] = None, upload
         async with httpx.AsyncClient() as client:
             # 7a: Summarize
             await _send_progress(session_id, STEPS[6], "active", "AI: Generating architecture summary…")
-            summary_resp = await _ai_post(client, "/ai/summarize", ai_context)
+            # Convert file_tree dict to a string summary for the AI
+            import json as _json
+            file_tree_str = _json.dumps(file_tree_summary) if isinstance(file_tree_summary, dict) else str(file_tree_summary)
+            summarize_payload = {
+                "session_id": session_id,
+                "file_tree_summary": file_tree_str,
+            }
+            summary_resp = await _ai_post(client, "/ai/summarize", summarize_payload)
             if summary_resp:
                 session.architecture_summary = summary_resp.get("architecture_summary", "")
             else:
@@ -245,12 +252,28 @@ async def run_pipeline(session_id: str, github_url: Optional[str] = None, upload
 
             # 7b: Components
             await _send_progress(session_id, STEPS[6], "active", "AI: Analyzing components…")
-            comp_resp = await _ai_post(client, "/ai/components", ai_context)
+            # Build modules list with files for each module
+            module_files_map: dict[str, list[str]] = {}
+            for f_path, mod_id in file_to_module.items():
+                module_files_map.setdefault(mod_id, []).append(f_path)
+            components_modules = [
+                {"id": s["moduleId"], "name": s["name"], "files": module_files_map.get(s["moduleId"], [])}
+                for s in session.complexity_scores
+            ]
+            components_payload = {
+                "session_id": session_id,
+                "modules": components_modules,
+            }
+            comp_resp = await _ai_post(client, "/ai/components", components_payload)
             ai_components = comp_resp.get("modules", []) if comp_resp else []
 
             # 7c: Complexity commentary
             await _send_progress(session_id, STEPS[6], "active", "AI: Adding complexity commentary…")
-            complexity_resp = await _ai_post(client, "/ai/complexity", ai_context)
+            complexity_payload = {
+                "session_id": session_id,
+                "scores": session.complexity_scores,
+            }
+            complexity_resp = await _ai_post(client, "/ai/complexity", complexity_payload)
             if complexity_resp:
                 commentaries = complexity_resp.get("commentary", [])
                 commentary_map = {c["moduleId"]: c.get("aiCommentary", "") for c in commentaries}
@@ -261,23 +284,33 @@ async def run_pipeline(session_id: str, github_url: Optional[str] = None, upload
 
             # 7d: Execution flows
             await _send_progress(session_id, STEPS[6], "active", "AI: Mapping execution flows…")
-            flows_resp = await _ai_post(client, "/ai/flows", ai_context)
+            # Identify entry points from graph nodes that have no incoming edges
+            entry_points = []
+            for node_data in session.graph_data.get("nodes", []):
+                if node_data.get("type") == "entry":
+                    entry_points.append(node_data["id"])
+            flows_payload = {
+                "session_id": session_id,
+                "entry_points": entry_points,
+                "module_graph": session.graph_data,
+            }
+            flows_resp = await _ai_post(client, "/ai/flows", flows_payload)
             session.execution_flows = flows_resp.get("flows", []) if flows_resp else []
             await _send_progress(session_id, STEPS[6], "done", "AI analysis complete")
 
             # 7e: Index to knowledge base
             await _send_progress(session_id, STEPS[7], "active", "Indexing to knowledge base…")
             # Read source file contents for indexing
-            source_contents = {}
+            index_files = []
             for f in session.source_files[:100]:  # Limit for indexing
                 from utils.file_utils import safe_read_file
                 content = safe_read_file(os.path.join(temp_dir, f))
                 if content:
-                    source_contents[f] = content
+                    index_files.append({"path": f, "content": content})
 
             index_payload = {
-                **ai_context,
-                "sourceFiles": source_contents,
+                "session_id": session_id,
+                "files": index_files,
             }
             index_resp = await _ai_post(client, "/ai/index", index_payload)
             indexed = index_resp.get("indexed_count", 0) if index_resp else 0
@@ -288,7 +321,26 @@ async def run_pipeline(session_id: str, github_url: Optional[str] = None, upload
 
             # 7f: Checklist
             await _send_progress(session_id, STEPS[8], "active", "Generating onboarding checklist…")
-            checklist_resp = await _ai_post(client, "/ai/checklist", ai_context)
+            # Determine project type from tech stack
+            project_type = "generic"
+            for t in session.tech_stack:
+                name_lower = t.get("name", "").lower()
+                if name_lower in ("react", "vue", "angular", "next.js", "nuxt"):
+                    project_type = name_lower.replace(".", "")
+                    break
+                elif name_lower in ("express", "fastapi", "django", "flask", "spring"):
+                    project_type = name_lower
+                    break
+                elif name_lower == "node.js":
+                    project_type = "node"
+                    break
+            detected_files = session.config_files + session.source_files[:50]
+            checklist_payload = {
+                "session_id": session_id,
+                "project_type": project_type,
+                "detected_files": detected_files,
+            }
+            checklist_resp = await _ai_post(client, "/ai/checklist", checklist_payload)
             session.checklist = checklist_resp.get("checklist", []) if checklist_resp else []
             await _send_progress(session_id, STEPS[8], "done", "Checklist generated")
 

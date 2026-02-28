@@ -11,6 +11,12 @@ from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import FastAPI
 
+# Ensure the repo root (CodeWiz/) is on sys.path so `from ai.*` imports work
+# regardless of which directory uvicorn is launched from.
+_repo_root = str(Path(__file__).resolve().parent.parent)
+if _repo_root not in sys.path:
+    sys.path.insert(0, _repo_root)
+
 # Load .env — try repo root first, then CWD
 _env_candidates = [
     Path(__file__).resolve().parent.parent / ".env",   # /ai/../.env
